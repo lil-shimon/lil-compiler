@@ -20,5 +20,6 @@ whoami
 echo start
 assert 0 0
 assert 42 42
+assert 21 "100+20-3"
 
 echo OK
