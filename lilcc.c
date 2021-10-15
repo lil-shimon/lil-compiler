@@ -13,6 +13,22 @@ typedef enum {
     TK_EOF,
 } TokenKind;
 
+typedef struct Token Token;
+
+/**
+ * トークンの型定義
+ * kind = トークンの種類
+ * *next = 次の入力
+ * val = kind == TK_NUMの時、数字
+ * *str = 文字
+ */
+struct Token {
+    TokenKind Kind;
+    Token *next;
+    int val;
+    char *str;
+};
+
 int main(int argc, char **argv) {
 
   /**
