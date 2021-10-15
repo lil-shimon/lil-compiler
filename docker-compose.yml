@@ -1,0 +1,15 @@
+version: "3"
+services:
+  cdev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lil-compiler
+    container_name: lil-compiler
+    volumes:
+      - type: bind
+        source: .
+        target: /lil-compiler
+    tty: true
+    working_dir: /
+    stdin_open: true
