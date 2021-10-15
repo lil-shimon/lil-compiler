@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include <string.h>
 
 /**
  * トークンの種類定義
@@ -37,7 +41,7 @@ Token *token;
  * @param fmt
  * @param ...
  */
-void err (char *fmt, ...) {
+void err(char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
@@ -53,59 +57,150 @@ void err (char *fmt, ...) {
  * @return
  */
 bool skip(char op) {
-    if (token->kind != TK_SYMBOL || token->str[0] != op)
+    if (token->Kind != TK_SYMBOL || token->str[0] != op)
         return false;
     token = token->next;
     return true;
 }
 
+/**
+ * 次の記号が予期している記号の時は、トークンを一つ進める
+ * それ以外の記号の場合はエラーを出す
+ * @param op
+ */
+void expect(char op) {
+    if (token->Kind != TK_SYMBOL || token->str[0] != op)
+        err("not '%c'", op);
+    token = token->next;
+}
+
+/**
+ * 次のトークンがintegerの場合、その数値を返す。
+ * トークンは一つ進む
+ * @return
+ */
+int expected_number() {
+    if (token->Kind != TK_NUM)
+        err("this is not integer");
+    int val = token->val;
+    token = token->next;
+    return val;
+}
+
+/**
+ * 最終かを判定
+ * @return
+ */
+bool is_eof() {
+    return token->Kind == TK_EOF;
+}
+
+/**
+ * 新しいトークンを返す関数
+ * @param kind
+ * @param cur
+ * @param str
+ * @return
+ */
+Token *new_token(TokenKind kind, Token *cur, char *str) {
+    Token *tk = calloc(1, sizeof(Token));
+    tk->Kind = kind;
+    tk->str = str;
+    cur->next = tk;
+    return tk;
+}
+
+/**
+ * 入力された値(*p)をトークナイズする
+ * @param p
+ * @return
+ */
+Token *tokenize(char *p) {
+
+    Token head;
+    head.next = NULL;
+    Token *cur = &head;
+
+    while (*p) {
+
+
+        // スペースの場合は飛ばす
+        if (isspace(*p)) {
+            p++;
+            continue;
+        }
+
+        // + or -の場合はシンボルトークンとして追加
+        if (*p == '+' || *p == '-') {
+            cur = new_token(TK_SYMBOL, cur, p++);
+            continue;
+        }
+
+        // 数字の場合は数字トークンとして追加
+        // 数字として登録
+        if (isdigit(*p)) {
+            cur = new_token(TK_NUM, cur, p);
+            cur->val = strtol(p, &p, 10);
+            continue;
+        }
+
+        // それ以外はエラー
+        err("failed to tokenize");
+    }
+
+    // 文字の最後EOFトークンとして追加
+    new_token(TK_EOF, cur, p);
+
+    return head.next;
+}
+
 int main(int argc, char **argv) {
 
-  /**
-   * 引数の数が適切でない場合、エラーを返す
-   */
-  if (argc != 2) {
-    fprintf(stderr, "Incorrect number of arguments \n");
-    return 1;
-  }
-
-  char *p = argv[1];
-
-  /**
-   * アセンブリで出力
-   */
-  printf(".intel_syntax noprefix\n");
-  printf(".globl main\n");
-  printf("main:\n");
-  printf("  mov rax, %ld\n", strtol(p, &p, 10));
-  while (*p) {
-
     /**
-     * @brief Construct a new if object
-     * 記号(+)の場合は足し算(add rax)したいので
-     * 記号の次の文字を参照
+     * 引数の数が適切でない場合、エラーを返す
      */
-    if (*p == '+') {
-      p++;
-      printf("  add rax, %ld\n", strtol(p, &p, 10));
-      continue;
+    if (argc != 2) {
+        fprintf(stderr, "Incorrect number of arguments \n");
+        return 1;
     }
 
     /**
-     * @brief Construct a new if object
-     * 記号(-)の場合は引き算(sub rax)したいので
-     * 次の文字を引く
+     * トークナイズ
      */
-    if (*p == '-') {
-      p++;
-      printf("  sub rax, %ld\n", strtol(p, &p, 10));
-      continue;
+    token = tokenize(argv[1]);
+
+    /**
+     * アセンブリで出力
+     */
+    printf(".intel_syntax noprefix\n");
+    printf(".globl main\n");
+    printf("main:\n");
+
+    /**
+     * 数値かを判定
+     * 計算の場合は最初が数字でないといけないので
+     * アセンブリでも最初のmovに数字が入る
+     */
+    printf("  mov rax, %d\n", expected_number());
+
+    while (!is_eof()) {
+
+        /**
+         * 記号(+)の場合は足し算(add rax)したいので
+         * 記号の次の文字を参照
+         */
+        if (skip('+')) {
+            printf("  add rax, %d\n", expected_number());
+            continue;
+        }
+
+        /**
+         * - の場合はsub rax
+         */
+        expect('-');
+        printf("  sub rax, %d\n", expected_number());
     }
 
-    /** それ以外の場合は予期しない記号としてエラーを出す */
-    fprintf(stderr, "unexpected: '%c'\n", *p);
-    return 1;
-  }
-  printf("  ret\n");
-  return 0;
+    printf("  ret\n");
+    return 0;
 }

@@ -16,10 +16,9 @@ assert() {
   fi
 }
 
-whoami
-echo start
+echo start debuging
 assert 0 0
 assert 42 42
-assert 21 "100+20-3"
+assert 9 "1 + 40 - 32 "
 
-echo OK
+echo OK!
