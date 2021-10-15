@@ -29,6 +29,36 @@ struct Token {
     char *str;
 };
 
+/** 現在のtoken */
+Token *token;
+
+/**
+ * エラー関数
+ * @param fmt
+ * @param ...
+ */
+void err (char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
+/**
+ * トークンが記号の時、trueを返す
+ * trueの場合はトークンを一つ進める
+ * トークンが記号以外の場合はfalse
+ * @param op
+ * @return
+ */
+bool skip(char op) {
+    if (token->kind != TK_SYMBOL || token->str[0] != op)
+        return false;
+    token = token->next;
+    return true;
+}
+
 int main(int argc, char **argv) {
 
   /**
