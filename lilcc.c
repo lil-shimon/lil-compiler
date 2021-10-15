@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     token = tokenize(argv[1]);
 
     /**
-     * アセンブリで出力
+     * アセンブリの頭部分出力
      */
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
