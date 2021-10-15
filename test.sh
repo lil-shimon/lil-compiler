@@ -3,7 +3,7 @@ assert() {
   expected="$1"
   input="$2"
 
-  ./lil-compiler "$input" > tmp.s
+  ./lilcc "$input" > tmp.s
   cc -o tmp tmp.s
   ./tmp
   actual="$?"
@@ -16,6 +16,8 @@ assert() {
   fi
 }
 
+whoami
+echo start
 assert 0 0
 assert 42 42
 
