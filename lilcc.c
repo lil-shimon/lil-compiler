@@ -1,6 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * トークンの種類定義
+ * TK_SYMBOL = 記号
+ * TK_NUM = 数字
+ * TK_EOF = 入力の終わり
+ */
+typedef enum {
+    TK_SYMBOL,
+    TK_NUM,
+    TK_EOF,
+} TokenKind;
+
 int main(int argc, char **argv) {
 
   /**
