@@ -36,14 +36,25 @@ struct Token {
 /** 現在のtoken */
 Token *token;
 
+/** 入力全て */
+char *user_input;
+
 /**
  * エラー関数
+ * エラー箇所と原因を報告
+ * @param loc
  * @param fmt
  * @param ...
  */
-void err(char *fmt, ...) {
+void err(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
+
+    int blank = loc - user_input;
+
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", blank, " ");
+    fprintf(stderr, "^ ");
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     exit(1);
@@ -70,7 +81,7 @@ bool skip(char op) {
  */
 void expect(char op) {
     if (token->Kind != TK_SYMBOL || token->str[0] != op)
-        err("not '%c'", op);
+        err(token->str, "not '%c'", op);
     token = token->next;
 }
 
@@ -81,7 +92,7 @@ void expect(char op) {
  */
 int expected_number() {
     if (token->Kind != TK_NUM)
-        err("this is not integer");
+        err(token->str, "this is not integer");
     int val = token->val;
     token = token->next;
     return val;
@@ -145,7 +156,7 @@ Token *tokenize(char *p) {
         }
 
         // それ以外はエラー
-        err("failed to tokenize");
+        err(token->str, "failed to tokenize");
     }
 
     // 文字の最後EOFトークンとして追加
