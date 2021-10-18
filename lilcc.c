@@ -31,9 +31,10 @@ typedef enum {
     ND_MUL,
     ND_DIV,
     ND_NUM,
-} NoneKind;
+} NodeKind;
 
 typedef struct Token Token;
+typedef struct Node Node;
 
 /**
  * トークンの型定義
@@ -47,6 +48,20 @@ struct Token {
     Token *next;
     int val;
     char *str;
+};
+
+/**
+ * 抽象構文木ノードのタイプ定義
+ * kind = ノードの型
+ * lhs = 左辺
+ * rhs = 右辺
+ * val = kind == ND_NUMの場合のみ使用
+ */
+struct Node {
+    NodeKind kind;
+    Node *lhs;
+    Node *rhs;
+    int val;
 };
 
 /** 現在のtoken */
@@ -179,6 +194,35 @@ Token *tokenize(char *p) {
     new_token(TK_EOF, cur, p);
 
     return head.next;
+}
+
+/**
+ * 左辺と右辺を受け取る二項演算子のノードを新しく作成する関数
+ * 
+ * @param kind 
+ * @param lhs 
+ * @param rhs 
+ * @return Node* 
+ */
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    node->lhs = lhs;
+    node->rhs = rhs;
+    return node;
+}
+
+/**
+ * 数値ノードを作成する関数
+ * 
+ * @param val 
+ * @return Node* 
+ */
+Node *new_node_num(int val) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_NUM;
+    node->val = val;
+    return node;
 }
 
 int main(int argc, char **argv) {
