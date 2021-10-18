@@ -31,9 +31,10 @@ typedef enum {
     ND_MUL,
     ND_DIV,
     ND_NUM,
-} NoneKind;
+} NodeKind;
 
 typedef struct Token Token;
+typedef struct Node Node;
 
 /**
  * トークンの型定義
@@ -47,6 +48,20 @@ struct Token {
     Token *next;
     int val;
     char *str;
+};
+
+/**
+ * 抽象構文木ノードのタイプ定義
+ * kind = ノードの型
+ * lhs = 左辺
+ * rhs = 右辺
+ * val = kind == ND_NUMの場合のみ使用
+ */
+struct Node {
+    NodeKind kind;
+    Node *lhs;
+    Node *rhs;
+    int val;
 };
 
 /** 現在のtoken */
@@ -179,6 +194,83 @@ Token *tokenize(char *p) {
     new_token(TK_EOF, cur, p);
 
     return head.next;
+}
+
+/**
+ * 左辺と右辺を受け取る二項演算子のノードを新しく作成する関数
+ * 
+ * @param kind 
+ * @param lhs 
+ * @param rhs 
+ * @return Node* 
+ */
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    node->lhs = lhs;
+    node->rhs = rhs;
+    return node;
+}
+
+/**
+ * 数値ノードを作成する関数
+ * 
+ * @param val 
+ * @return Node* 
+ */
+Node *new_node_num(int val) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_NUM;
+    node->val = val;
+    return node;
+}
+
+Node *primary () {
+    // 次のトークンが(の場合、"(" expr ")" である可能性が高い
+    if (skip('(')) {
+        Node *node = expr();
+        expect(')');
+        return node;
+    }
+
+    // もし違うなら数値のはず
+    return new_node_num(expected_number());
+}
+
+/**
+ * 左結合の演算子をパースする関数(掛割)
+ * 
+ * @return Node* 
+ */
+Node *mul() {
+    Node *node = primary();
+
+    for (;;) {
+        if (skip('*'))
+            node = new_node(ND_MUL, node, primary());
+        else if (skip('/'))
+            node = new_node(ND_DIV, node, primary());
+        else
+            return node;
+    }
+}
+
+/**
+ * 左結合の演算子をパーズする関数(足し引き)
+ * 
+ * @return Node* 
+ */
+Node *expr() {
+    Node *node = mul();
+
+    for (;;) {
+        if (skip('+')) 
+            node = new_node(ND_ADD, node, mul());
+        else if (skip('-'))
+            node = new_node(ND_SUB, node, mul());
+        else
+            return node;
+    }
 }
 
 int main(int argc, char **argv) {
