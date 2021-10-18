@@ -225,6 +225,54 @@ Node *new_node_num(int val) {
     return node;
 }
 
+Node *primary () {
+    // 次のトークンが(の場合、"(" expr ")" である可能性が高い
+    if (skip('(')) {
+        Node *node = expr();
+        expect(')');
+        return node;
+    }
+
+    // もし違うなら数値のはず
+    return new_node_num(expected_number());
+}
+
+/**
+ * 左結合の演算子をパースする関数(掛割)
+ * 
+ * @return Node* 
+ */
+Node *mul() {
+    Node *node = primary();
+
+    for (;;) {
+        if (skip('*'))
+            node = new_node(ND_MUL, node, primary());
+        else if (skip('/'))
+            node = new_node(ND_DIV, node, primary());
+        else
+            return node;
+    }
+}
+
+/**
+ * 左結合の演算子をパーズする関数(足し引き)
+ * 
+ * @return Node* 
+ */
+Node *expr() {
+    Node *node = mul();
+
+    for (;;) {
+        if (skip('+')) 
+            node = new_node(ND_ADD, node, mul());
+        else if (skip('-'))
+            node = new_node(ND_SUB, node, mul());
+        else
+            return node;
+    }
+}
+
 int main(int argc, char **argv) {
 
     /**
