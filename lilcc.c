@@ -17,6 +17,22 @@ typedef enum {
     TK_EOF,
 } TokenKind;
 
+/**
+ * ノードの種類定義 
+ * ND_ADD = 足し算
+ * ND_SUB = 引き算
+ * ND_MUL = 掛け算
+ * ND_DIV = 割り算
+ * ND_NUM = 整数
+ */
+typedef enum {
+    ND_ADD,
+    ND_SUB,
+    ND_MUL,
+    ND_DIV,
+    ND_NUM,
+} NoneKind;
+
 typedef struct Token Token;
 
 /**
